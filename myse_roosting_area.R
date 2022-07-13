@@ -23,7 +23,8 @@
 #       where A2 is the cell number containing the date value
 
 # load data from previous run
-load("myse_roosting_area.RDS", envir=parent.frame())
+load("myse_roosting_area.RDS")
+
 library(adehabitatLT)
 library(adehabitatHR)
 library(sp)
@@ -70,7 +71,7 @@ summary(as.factor(rts$Year))
 ################################################################################################################################
 ################################################################################################################################
 
-# some data processing to make sure locations data are in the correct/useful format
+##### some data processing to make sure locations data are in the correct/useful format #####
 
 # combine the location data into a single dataframe; it is best to use UTM values
 ## kg added print command to make sure we didn't lose decimal places
@@ -101,7 +102,7 @@ save.image("myse_roosting_area.RDS")
 ################################################################################################################################
 ################################################################################################################################
 
-# look at the tracking histories
+##### look at the tracking histories #####
 
 # some summary statistics
 
@@ -122,7 +123,7 @@ table(rts$daynum, rts$Bat)
 ################################################################################################################################
 ################################################################################################################################
 
-# look at the trajectories of tracked animals
+##### look at the trajectories of tracked animals #####
 
 # load the library with the trajectory functions
 library(adehabitatLT)
@@ -186,7 +187,7 @@ save.image("myse_roosting_area.RDS")
 ################################################################################################################################
 ################################################################################################################################
 
-# create home ranges and utilization distributions for tracked animals
+##### create home ranges and utilization distributions for tracked animals ####
 
 # load the R library that contains the functions used below
 library(adehabitatHR)
@@ -303,7 +304,7 @@ writeOGR(ver, sfdir, "roost 25% homerange", driver = "ESRI Shapefile")
 save.image("myse_roosting_area.RDS")
 
 
-## now delete that workspace and do it all again but pool both years together
+##### now delete that workspace and do it all again but pool both years together #####
 
 
 library(adehabitatLT)
@@ -388,7 +389,7 @@ save.image("myse_roosting_area_2yr.RDS")
 ################################################################################################################################
 ################################################################################################################################
 
-# look at the tracking histories
+##### look at the tracking histories #####
 
 # some summary statistics
 
@@ -409,7 +410,7 @@ table(rts$daynum, rts$Bat)
 ################################################################################################################################
 ################################################################################################################################
 
-# look at the trajectories of tracked animals
+##### look at the trajectories of tracked animals #####
 
 # load the library with the trajectory functions
 library(adehabitatLT)
@@ -473,7 +474,7 @@ sfdir <- file.path("G:/My Drive/FIRE, FIRE ISLAND!/Analysis/Networks/GIS")
 ################################################################################################################################
 ################################################################################################################################
 
-# create home ranges and utilization distributions for tracked animals
+##### create home ranges and utilization distributions for tracked animals #####
 
 # load the R library that contains the functions used below
 library(adehabitatHR)
@@ -593,7 +594,7 @@ writeOGR(volud, sfdir, "volud", driver = "ESRI Shapefile")
 save.image("myse_roosting_area2.RDS")
 
 load("myse_roosting_area2.RDS")
-## try to map it here
+##### try to map it here #####
 library(rgdal)
 library(sf)
 library(ggplot2)
@@ -601,6 +602,7 @@ library(viridis)
 library(RColorBrewer)
 library(raster)
 library(mapview)
+library(graticule)
 
 
 ## load in WIFL outline shapefile
@@ -619,6 +621,30 @@ volud_sp <- as(volud_sf, "Spatial")
 volud2 <- volud
 volud2$n <- ifelse(volud2$n > 95, NA, volud2$n)
 
+## 
+kareas <- getverticeshr(ud, 95)
+kareas50 <- getverticeshr(ud, 50)
+kareas25 <- getverticeshr(ud, 25)
+kdareas <- fortify(kareas)
+
+## define projection
+prj <- "+proj=utm +zone=18 ellps=WGS84"
+
+## specify where we want meridians and parallels
+lats <- seq(4513600, 4516600, length = 6)
+lons <- seq(652000, 685000, length = 6)
+
+## push them out a little bit on each side
+x1 <- range(lons) + c(-1000, 1000)
+y1 <- range(lats) + c(-1000, 1000)
+
+## build the lines with precise locations and ranges
+grat <- graticule(lons, lats, proj = prj, xlim = x1, ylim = y1)
+
+## build the labels, here they sit exactly on the western and northern extent
+## of our line ranges
+labs <- graticule_labels(lons, lats, xline = min(xl), yline = max(yl), proj = prj)
+
 
 ## mapview
 mapview(WIFL_sf, alpha.regions = 0.01) + 
@@ -628,11 +654,6 @@ mapview(WIFL_sf, alpha.regions = 0.01) +
 
 
 
-## 
-kareas <- getverticeshr(ud, 95)
-kareas50 <- getverticeshr(ud, 50)
-kareas25 <- getverticeshr(ud, 25)
-kdareas <- fortify(kareas)
 
 # 
 # ## try with leaflet
